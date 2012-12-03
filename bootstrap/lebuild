@@ -163,7 +163,7 @@ case "$1" in
 					fi
 				) || die "Build failed: '$1'."
 			else
-				die "Wrong lebuild name."
+				die "Wrong lebuild name. $1"
 			fi
 		shift
 		building_num=$((building_num+1))
