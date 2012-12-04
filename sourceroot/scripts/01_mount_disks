@@ -1,0 +1,34 @@
+#!/bin/sh
+echo '[+] Detecting Disks'
+
+# Get all detected disk info
+fdisk=`fdisk -l`
+
+# get swap disks
+swap=`echo "$fdisk" | grep swap | awk '{print $1}'`
+
+# get disk partitions
+disks=`echo "$fdisk" | grep Linux | grep -v swap | awk '{print $1}'`
+
+
+# use the swap space
+if [[ -z "$swap" ]]; then
+    echo '[!] No swap partitions found'
+else
+    echo "$swap" | while read -r line; do
+        echo "[+] running swapon $line"
+        swapon "$line"
+    done
+fi
+
+# mount disks
+if [[ -z "$disks" ]]; then
+    echo "[!] no mountable disks"
+else
+    echo "$disks" | while read -r line; do
+        disk=`echo "$line" | cut -d "/" -f 3`
+        echo "[+] mounting disk /dev/$disk on /mnt/$disk"
+        mkdir -p "/mnt/$disk"
+        mount "/dev/$disk" "/mnt/$disk"
+    done
+fi
