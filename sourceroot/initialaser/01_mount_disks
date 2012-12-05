@@ -26,9 +26,9 @@ if [[ -z "$disks" ]]; then
     echo "[!] no mountable disks"
 else
     echo "$disks" | while read -r line; do
-        disk=`echo "$line" | cut -d "/" -f 3`
-        echo "[+] mounting disk /dev/$disk on /mnt/$disk"
-        mkdir -p "/mnt/$disk"
-        mount "/dev/$disk" "/mnt/$disk"
+        disk=`echo "$line" |  sed 's@/dev/@@'`
+        echo "[+] mounting disk /dev/$disk on /d/$disk"
+        mkdir -p "/d/$disk"
+        mount "/dev/$disk" "/d/$disk"
     done
 fi

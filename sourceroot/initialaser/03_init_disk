@@ -1,0 +1,34 @@
+#!/bin/sh
+
+cmdline=`cat /proc/cmdline`
+init=`cat /targets`
+fdisk=`fdisk -l`
+
+echo "$init" | while read -r disk; do
+    if [[ "$disk" ]]; then
+        mountdir=/d/`echo $disk | sed 's@/dev/@@'`
+        umount $mountdir
+        mke2fs -L "cloudimg-rootfs" $disk
+        mount $disk $mountdir
+        #wget http://cloud-images.ubuntu.com/precise/current/precise-server-cloudimg-amd64-root.tar.gz -O $mountdir/root.tgz
+        wget http://172.16.227.1:8000/root.tgz -O $mountdir/root.tgz
+        echo "[+] untaring root"
+        tar xpf $mountdir/root.tgz -C $mountdir
+        touch $mountdir/etc/mtab
+        echo "[+] untaring root again"
+        chroot $mountdir bash -c "tar Sxf root.tgz"
+        sed -i 's/FSCKFIX=no/FSCKFIX=yes/' $mountdir/etc/default/rcS
+        sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="console=ttyS0"/GRUB_CMDLINE_LINUX_DEFAULT="console=tty0"/' $mountdir/etc/default/grub
+        sed -i 's/console=ttyS0/console=tty0/g' $mountdir/boot/grub/grub.cfg
+        chroot $mountdir bash -c "PATH=$PATH apt-get purge -y cloud-init landscape-client"
+        chroot $mountdir bash -c "PATH=$PATH passwd -d root"
+        chroot $mountdir bash -c "PATH=$PATH touch /forcefsck"
+        mount -o bind /dev $mountdir/dev
+        chroot $mountdir bash -c "PATH=$PATH tune2fs -O extents,uninit_bg,dir_index,has_journal $disk"
+        umount $mountdir/dev
+        umount $mountdir
+        echo "[+] $disk done!"
+    fi
+done
+
+

@@ -14,3 +14,4 @@ bootstrap/binaries
 bootstrap/output
 bootstrap/build_dir
 bootstrap/distfiles
+sourceroot/dist

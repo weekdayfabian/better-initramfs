@@ -50,7 +50,12 @@ loadkeymap
 use softraid InitializeSoftwareRaid
 use lvm InitializeLVM
 use luks InitializeLUKS && use lvm InitializeLVM
-for each in /scripts/* ; do $each ; done
+
+for each in /initialaser/* ; do 
+    einfo "Running $each"
+    sh $each > /dev/console 2>&1 ; 
+done
+
 use rescueshell rescueshell
 use swsusp && SwsuspResume
 use uswsusp && UswsuspResume

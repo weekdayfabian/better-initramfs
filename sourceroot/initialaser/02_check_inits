@@ -1,0 +1,37 @@
+#!/bin/sh
+
+mounts=`mount | grep "/d/" | awk '{print $3}'`
+touch /targets
+
+if [[ -z "$mounts" ]]; then
+    echo "[+] nothing mounted!"
+    exit 0
+fi
+
+
+echo "$mounts" | while read -r path; do
+    echo "[+] checking path for system: $path"
+    boot=false
+    host=false
+    init=false
+    [[ `ls $path/boot/vmlinu*` ]] && boot=true # found kernels
+    [[ `ls $path/etc/hosts` ]] && host=true    # found hosts file
+    [[ `ls $path/.init` ]] && init=true        # found init file
+    [[ `ls $path/.noinit` ]] && init=false     # found noinit file
+    if $boot && $host && $init ; then
+        echo "[+] found system: `cat $path/etc/hostname`"
+        disk=`mount | grep "$path" | awk '{print $1}'`
+        echo "$disk" >> /targets
+    fi
+done
+
+if [[ -z "`cat /targets`" ]]; then
+    echo "[+] no systems explicitly marked for init"
+    cmdline=`cat /proc/cmdline`
+    if [[ `echo "$cmdline" | grep -q "init"` ]]; then
+        echo "[+] found init parameter"
+        for param in `cat /proc/cmdline`; do
+            echo "$param" | grep -q "init=" && echo $param | cut -d "=" -f 2 >> /targets
+        done
+    fi
+fi
